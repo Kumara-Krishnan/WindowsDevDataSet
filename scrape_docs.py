@@ -11,7 +11,9 @@ import glob
 import urllib.parse
 
 # Utility function to calculate md5 hash using href and toc_title
-def md5_hash(href, toc_title):
+def md5_hash(href, toc_title):    # Treat href as an empty string if it's None
+    if href is None:
+        href = ""
     combined_str = f"{href}_{toc_title}"
     return hashlib.md5(combined_str.encode()).hexdigest()
 
@@ -22,24 +24,15 @@ def process_json(items, base_url, parent_id=None):
         href = item.get('href', None)
         toc_title = item.get('toc_title', 'No title')
 
-        if href and toc_title:
-            item_id = md5_hash(href, toc_title)
-            with sqlite3.connect('docs.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    INSERT OR IGNORE INTO documentation (id, parent_id, toc_title, href)
-                    VALUES (?, ?, ?, ?)
-                ''', (item_id, parent_id, toc_title, href))
-                conn.commit()
-        else:
-            with sqlite3.connect('docs.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    INSERT OR IGNORE INTO documentation (id, parent_id, toc_title, href)
-                    VALUES (?, ?, ?, ?)
-                ''', (None, parent_id, toc_title, None))
-                conn.commit()
-
+        item_id = md5_hash(href, toc_title)
+        with sqlite3.connect('docs.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT OR IGNORE INTO documentation (id, parent_id, toc_title, href)
+                VALUES (?, ?, ?, ?)
+            ''', (item_id, parent_id, toc_title, href))
+            conn.commit()
+                
         if 'children' in item:
             process_json(item['children'], base_url, item_id if item_id else parent_id)
 
