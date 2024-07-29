@@ -70,6 +70,9 @@ def download_content(item, base_url, index, total_count):
             ''', (extracted_html, markdown_content, item_id))
             conn.commit()
 
+        # Save markdown content to file in the markdown folder
+        save_markdown_file(item_id, markdown_content)
+
         # Print progress
         sys.stdout.write(f"\rProcessing {index + 1} out of {total_count}\n")
         sys.stdout.write(f"Title: {soup.title.string if soup.title else 'No title'}\n")
@@ -79,6 +82,20 @@ def download_content(item, base_url, index, total_count):
     except RequestException as e:
         sys.stdout.write(f"\rFailed to download {full_url}: {e}\n")
         sys.stdout.flush()
+
+def save_markdown_file(item_id, markdown_content):
+    if markdown_content:
+        # Create markdown directory if it doesn't exist
+        markdown_dir = 'markdown'
+        os.makedirs(markdown_dir, exist_ok=True)
+
+        # Save the markdown content to a file named 'md5id.md'
+        markdown_file_path = os.path.join(markdown_dir, f"{item_id}.md")
+        with open(markdown_file_path, 'w', encoding='utf-8') as markdown_file:
+            markdown_file.write(markdown_content)
+        print(f"Markdown content saved to {markdown_file_path}")
+    else:
+        print(f"No markdown content to save for ID: {item_id}")
 
 def process_file(filepath):
     try:
